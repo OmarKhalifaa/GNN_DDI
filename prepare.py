@@ -12,6 +12,7 @@ import itertools
 from sklearn.decomposition import PCA
 #Connection to the DB
 conn = sqlite3.connect('/kaggle/input/dataset/event.db') 
+cursor = conn.cursor()
 
 # List all tables
 cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
