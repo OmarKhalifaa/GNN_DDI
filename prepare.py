@@ -11,7 +11,7 @@ from tqdm import tqdm
 import itertools
 from sklearn.decomposition import PCA
 #Connection to the DB
-conn = sqlite3.connect('/event.db')
+conn = sqlite3.connect('/kaggle/input/dataset/event.db') 
 
 cursor = conn. cursor()
 cursor. execute("SELECT name FROM sqlite_master WHERE type='table';") # [('event_number',), ('event',), ('drug',), ('extraction',)]
