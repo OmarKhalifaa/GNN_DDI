@@ -24,7 +24,7 @@ cursor = conn. cursor()
 #print("event row COUNT: ",cursor. fetchall())
 # List all tables
 cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-print("Tables : ", cursor.fetchall())
+print("Tables55555555555555555555555 : ", cursor.fetchall())
 
 # List columns of the 'drug' table
 cursor.execute("PRAGMA table_info('drug')")
