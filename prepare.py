@@ -11,25 +11,18 @@ from tqdm import tqdm
 import itertools
 from sklearn.decomposition import PCA
 #Connection to the DB
-conn = sqlite3.connect('/kaggle/input/dataset/event.db') 
-cursor = conn.cursor()
+conn = sqlite3.connect('/event.db')
 
-# List all tables
-cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-print("Tables : ", cursor.fetchall())
+cursor = conn. cursor()
+cursor. execute("SELECT name FROM sqlite_master WHERE type='table';") # [('event_number',), ('event',), ('drug',), ('extraction',)]
+print("Tables : ",cursor. fetchall())
+cursor. execute("SELECT name FROM PRAGMA_TABLE_INFO('drug');") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
+print("drug : ",cursor. fetchall())
+cursor. execute("SELECT name FROM PRAGMA_TABLE_INFO('event');") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
+print("event : ",cursor. fetchall())
+cursor. execute("SELECT COUNT(*) FROM event") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
+print("event row COUNT: ",cursor. fetchall())
 
-# List columns of the 'drug' table
-cursor.execute("PRAGMA table_info('drug')")
-print("drug : ", cursor.fetchall())
-
-# List columns of the 'event' table
-cursor.execute("PRAGMA table_info('event')")
-print("event : ", cursor.fetchall())
-
-# Count rows in the 'event' table
-cursor.execute("SELECT COUNT(*) FROM event")
-row_count = cursor.fetchone()[0]  # Fetch the single integer value
-print("event row COUNT: ", row_count)
 # close the DB connection 
 conn.close() 
 
@@ -67,7 +60,7 @@ def feature_vector(df, feature_name):
 
   return sim_matrix
 
-conn = sqlite3.connect('/kaggle/input/dataset/event.db')
+conn = sqlite3.connect('/event.db')
 df_drug = pd.read_sql('select * from drug;', conn)
 
 feature_list = ['target', 'enzyme', 'pathway', 'smile']
@@ -85,7 +78,7 @@ for feature in feature_list:
 
 conn.close()
 
-conn = sqlite3.connect('/kaggle/input/dataset/event.db')
+conn = sqlite3.connect('/event.db')
 extraction = pd.read_sql('select * from extraction;', conn)
 mechanism = extraction['mechanism']
 action = extraction['action']
@@ -342,4 +335,3 @@ f1 = write_f(f_all_m1,'/DDI/data5/featuers_m1.txt')
 f2 = write_f(f_all_m2,'/DDI/data5/featuers_m2.txt')
 f3 = write_f(f_all_m3,'/DDI/data5/featuers_m3.txt')
 f4 = write_f(f_all_m4,'/DDI/data5/featuers_m4.txt')
-
