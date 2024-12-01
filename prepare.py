@@ -67,7 +67,7 @@ def feature_vector(df, feature_name):
 
   return sim_matrix
 
-conn = sqlite3.connect('/event.db')
+conn = sqlite3.connect('/kaggle/input/dataset/event.db')
 df_drug = pd.read_sql('select * from drug;', conn)
 
 feature_list = ['target', 'enzyme', 'pathway', 'smile']
@@ -85,7 +85,7 @@ for feature in feature_list:
 
 conn.close()
 
-conn = sqlite3.connect('/event.db')
+conn = sqlite3.connect('/kaggle/input/dataset/event.db')
 extraction = pd.read_sql('select * from extraction;', conn)
 mechanism = extraction['mechanism']
 action = extraction['action']
