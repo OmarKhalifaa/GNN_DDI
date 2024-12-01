@@ -11,7 +11,7 @@ from tqdm import tqdm
 import itertools
 from sklearn.decomposition import PCA
 #Connection to the DB
-conn = sqlite3.connect('/event.db')
+conn = sqlite3.connect('/kaggle/input/dataset/event.db')
 
 cursor = conn. cursor()
 cursor. execute("SELECT name FROM sqlite_master WHERE type='table';") # [('event_number',), ('event',), ('drug',), ('extraction',)]
@@ -60,7 +60,7 @@ def feature_vector(df, feature_name):
 
   return sim_matrix
 
-conn = sqlite3.connect('/event.db')
+conn = sqlite3.connect('/kaggle/input/dataset/event.db')
 df_drug = pd.read_sql('select * from drug;', conn)
 
 feature_list = ['target', 'enzyme', 'pathway', 'smile']
@@ -78,7 +78,7 @@ for feature in feature_list:
 
 conn.close()
 
-conn = sqlite3.connect('/event.db')
+conn = sqlite3.connect('/kaggle/input/dataset/event.db')
 extraction = pd.read_sql('select * from extraction;', conn)
 mechanism = extraction['mechanism']
 action = extraction['action']
@@ -335,3 +335,4 @@ f1 = write_f(f_all_m1,'/DDI/data5/featuers_m1.txt')
 f2 = write_f(f_all_m2,'/DDI/data5/featuers_m2.txt')
 f3 = write_f(f_all_m3,'/DDI/data5/featuers_m3.txt')
 f4 = write_f(f_all_m4,'/DDI/data5/featuers_m4.txt')
+
