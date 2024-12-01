@@ -14,15 +14,30 @@ from sklearn.decomposition import PCA
 conn = sqlite3.connect('/kaggle/input/dataset/event.db') 
 
 cursor = conn. cursor()
-cursor. execute("SELECT name FROM sqlite_master WHERE type='table';") # [('event_number',), ('event',), ('drug',), ('extraction',)]
-print("Tables : ",cursor. fetchall())
-cursor. execute("SELECT name FROM PRAGMA_TABLE_INFO('drug');") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
-print("drug : ",cursor. fetchall())
-cursor. execute("SELECT name FROM PRAGMA_TABLE_INFO('event');") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
-print("event : ",cursor. fetchall())
-cursor. execute("SELECT COUNT(*) FROM event") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
-print("event row COUNT: ",cursor. fetchall())
+#cursor. execute("SELECT name FROM sqlite_master WHERE type='table';") # [('event_number',), ('event',), ('drug',), ('extraction',)]
+#print("Tables : ",cursor. fetchall())
+#cursor. execute("SELECT name FROM PRAGMA_TABLE_INFO('drug');") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
+#print("drug : ",cursor. fetchall())
+#cursor. execute("SELECT name FROM PRAGMA_TABLE_INFO('event');") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
+#print("event : ",cursor. fetchall())
+#cursor. execute("SELECT COUNT(*) FROM event") # [('index',), ('id',), ('target',), ('enzyme',), ('pathway',), ('smile',), ('name',)]
+#print("event row COUNT: ",cursor. fetchall())
+# List all tables
+cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+print("Tables : ", cursor.fetchall())
 
+# List columns of the 'drug' table
+cursor.execute("PRAGMA table_info('drug')")
+print("drug : ", cursor.fetchall())
+
+# List columns of the 'event' table
+cursor.execute("PRAGMA table_info('event')")
+print("event : ", cursor.fetchall())
+
+# Count rows in the 'event' table
+cursor.execute("SELECT COUNT(*) FROM event")
+row_count = cursor.fetchone()[0]  # Fetch the single integer value
+print("event row COUNT: ", row_count)
 # close the DB connection 
 conn.close() 
 
