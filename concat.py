@@ -65,10 +65,17 @@ def reduc_shape(m):
             dd = np.pad(dd, (0, max_len_group - len(dd)), 'constant', constant_values=(0,))
             print(f"Group {i} dd shape after padding: {dd.shape}")
 
-            max_len = max(max_len, len(dd))
+            # Concatenation with shape checks
             for j in s2[1:]:
                 dd = np.concatenate((dd, m[j, 2:]))
                 print(f"After concatenating with s2[{j}]: {dd.shape}")
+
+                # Check for shape consistency after concatenation
+                if len(dd) != len(s2) * max_len_group:
+                    print(f"Shape mismatch in group {i} after concatenating with s2[{j}]")
+                    # Consider handling the inconsistency here, e.g., by truncating or padding
+
+            max_len = max(max_len, len(dd))
 
         except:
             print("c")
