@@ -55,6 +55,11 @@ def reduc_shape(m):
     for i in range(572):
         try:
             s2 = np.where(m[:, 1] == i)[0]
+
+            # Print shapes for inspection
+            print("Shape of s2:", s2.shape)
+            print("Shape of m[s2[0], 2:]", m[s2[0], 2:].shape)
+
             dd = m[s2[0], 2:]
             max_len = max(max_len, len(dd))
             for j in s2[1:]:
@@ -63,8 +68,8 @@ def reduc_shape(m):
             print("c")
             continue
 
-        # Pad dd to the maximum length
-        if len(dd) < max_len:
+        # Conditional padding based on data analysis
+        if len(dd) < max_len and all(v != 0 for v in dd):  # Check for non-zero values
             dd = np.pad(dd, (0, max_len - len(dd)), 'constant', constant_values=(0,))
 
         r.append([i, dd])
