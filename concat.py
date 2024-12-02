@@ -102,27 +102,30 @@ def multiply_features(f_i, DDI):
 # Configuration: Define Paths
 # -----------------------------
 
-# Base directory
-base_dir = "/kaggle/working/GNN_DDI/DDI/data5/"
+# Base directory (parent of data5 and full_pos2.txt)
+base_dir = "/kaggle/working/GNN_DDI/DDI/"
 
-# Input CSV file paths
+# Data5 subdirectory
+data5_dir = os.path.join(base_dir, "data5/")
+
+# Input CSV file paths within data5
 file_paths = [
-    os.path.join(base_dir, "final_modelss1.csv"),
-    os.path.join(base_dir, "final_modelss2.csv"),
-    os.path.join(base_dir, "final_modelss3.csv"),
-    os.path.join(base_dir, "final_modelss4.csv")
+    os.path.join(data5_dir, "final_modelssd1_d_32.csv"),
+    os.path.join(data5_dir, "final_modelssd2_d_32.csv"),
+    os.path.join(data5_dir, "final_modelssd3_d_32.csv"),
+    os.path.join(data5_dir, "final_modelssd4_d_32.csv")
 ]
 
-# Output file paths
+# Output file paths within data5
 output_paths = [
-    os.path.join(base_dir, "t_c_m_1_32.txt"),
-    os.path.join(base_dir, "t_c_m_2_32.txt"),
-    os.path.join(base_dir, "t_c_m_3_32.txt"),
-    os.path.join(base_dir, "t_c_m_4_32.txt")
+    os.path.join(data5_dir, "t_c_m_1_32.txt"),
+    os.path.join(data5_dir, "t_c_m_2_32.txt"),
+    os.path.join(data5_dir, "t_c_m_3_32.txt"),
+    os.path.join(data5_dir, "t_c_m_4_32.txt")
 ]
 
-# Path to full_pos.txt
-full_pos_path = os.path.join(base_dir, "full_pos.txt")
+# Path to full_pos2.txt in base_dir
+full_pos_path = os.path.join(base_dir, "full_pos2.txt")
 
 # -----------------------------
 # Data Loading and Processing
@@ -139,10 +142,10 @@ for path in file_paths:
     except Exception as e:
         print(f"Error loading {path}: {e}")
 
-# Unpack processed data
+# Ensure all four files are processed
 if len(processed_data) != 4:
     print("Error: Not all input files were processed successfully.")
-    # Handle the error as needed
+    # Optionally, handle the error (e.g., exit the script or skip further processing)
 else:
     x1, x2, x3, x4 = processed_data
 
@@ -170,7 +173,7 @@ else:
         full_pos = pd.read_csv(full_pos_path, header=None, sep=' ').values
         print(f"full_pos shape: {full_pos.shape}")
     except Exception as e:
-        print(f"Error loading full_pos.txt: {e}")
+        print(f"Error loading {full_pos_path}: {e}")
         full_pos = np.array([])
 
     if full_pos.size > 0:
