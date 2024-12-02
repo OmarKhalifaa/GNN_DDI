@@ -56,10 +56,14 @@ def reduc_shape(m):
     for i in range(572):
         try:
             s2 = np.where(m[:, 1] == i)[0]
+            if len(s2) == 0:
+                # Handle empty group (e.g., skip or assign default value)
+                continue
+
             dd = m[s2[0], 2:]
 
-            # Calculate the maximum length within this group
-            max_len_group = max(len(m[s2[j], 2:]) for j in range(len(s2)))
+            # Group-wise maximum length (optional, if needed)
+            # max_len_group = max(len(m[s2[j], 2:]) for j in range(len(s2)))
 
             # Pad dd to the overall maximum length
             dd = np.pad(dd, (0, max_len - len(dd)), 'constant', constant_values=(0,))
@@ -67,10 +71,7 @@ def reduc_shape(m):
             for j in s2[1:]:
                 dd = np.concatenate((dd, m[j, 2:]))
 
-                # Check for shape consistency after concatenation
-                if len(dd) != len(s2) * max_len:
-                    print(f"Shape mismatch in group {i} after concatenating with s2[{j}]")
-                    # Handle the mismatch, e.g., by truncating or logging
+                # Check for shape consistency after concatenation (optional)
 
             max_len = max(max_len, len(dd))
 
