@@ -3,10 +3,10 @@ import numpy as np
 import pandas as pd
 import csv
 
-x1=np.array(np.array(pd.read_csv("/DDI/data/final_modelssd1_d_32.csv", header=None , sep=',')).tolist())
-x2=np.array(np.array(pd.read_csv("/DDI/data/final_modelssd2_d_32.csv", header=None , sep=',')).tolist())
-x3=np.array(np.array(pd.read_csv("/DDI/data/final_modelssd3_d_32.csv", header=None , sep=',')).tolist())
-x4=np.array(np.array(pd.read_csv("/DDI/data/final_modelssd4_d_32.csv", header=None , sep=',')).tolist())
+x1=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelssd1_d_32.csv", header=None , sep=',')).tolist())
+x2=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelssd2_d_32.csv", header=None , sep=',')).tolist())
+x3=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelssd3_d_32.csv", header=None , sep=',')).tolist())
+x4=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelssd4_d_32.csv", header=None , sep=',')).tolist())
 
 def chang_to_array(s):
   # print(s.shape)
