@@ -2,7 +2,7 @@ from pandas import DataFrame
 import numpy as np
 import pandas as pd
 import csv
-x1=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss1_d_32.csv", header=None , sep=',')).tolist())
+x1=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss1.csv", header=None , sep=',')).tolist())
 x2=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss2.csv", header=None , sep=',')).tolist())
 x3=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss3.csv", header=None , sep=',')).tolist())
 x4=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss4.csv", header=None , sep=',')).tolist())
