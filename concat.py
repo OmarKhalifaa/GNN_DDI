@@ -112,10 +112,9 @@ data5_dir = os.path.join(base_dir, "data5/")
 file_paths = [
     os.path.join(data5_dir, "final_modelss1.csv"),
     os.path.join(data5_dir, "final_modelss2.csv"),
-    os.path.join(data5_dir, "final_modelssd3.csv"),
-    os.path.join(data5_dir, "final_modelssd4.csv")
+    os.path.join(data5_dir, "final_modelss3.csv"),
+    os.path.join(data5_dir, "final_modelss4.csv")
 ]
-
 # Output file paths within data5
 output_paths = [
     os.path.join(data5_dir, "t_c_m_1_32.txt"),
