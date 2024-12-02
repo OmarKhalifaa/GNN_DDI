@@ -8,7 +8,7 @@ np_seed(1)
 # from tensorflow import set_random_seed
 # set_random_seed(2)
 
-import os
+import os  # Ensure os is imported
 import csv
 import sqlite3
 import time
@@ -72,7 +72,7 @@ full_pos_path = os.path.join(base_dir, "full_pos2.txt")
 # Feature-related parameters
 event_num = 65
 droprate = 0.3
-vector_size = 2080
+vector_size = 32  # Updated to match feature dimension
 clf = "DDIMDL"
 CV = 5
 seed_value = 0  # Renamed to avoid conflict with function 'seed'
@@ -90,7 +90,7 @@ def DNN():
     Returns:
         keras.Model: Compiled DNN model.
     """
-    train_input = Input(shape=(vector_size,), name='Inputlayer')
+    train_input = Input(shape=(vector_size,), name='Inputlayer')  # Now (32,)
     train_in = Dense(512, activation='relu')(train_input)
     train_in = BatchNormalization()(train_in)
     train_in = Dropout(droprate)(train_in)
@@ -192,11 +192,7 @@ def cross_validation(feature_matrix, label_matrix, clf_type, event_num, seed, CV
     y_pred = np.array([])
     y_score = np.zeros((0, event_num), dtype=float)
     index_all_class = get_index(label_matrix, event_num, seed, CV)
-    matrix = []
-    if not isinstance(feature_matrix, list):
-        matrix.append(feature_matrix)
-        feature_matrix = matrix
-
+    
     for k in range(CV):
         print(f"Cross-Validation Fold {k+1}/{CV}")
         train_index = np.where(index_all_class != k)[0]
@@ -379,7 +375,7 @@ def main():
     new_label = full_pos[:, 0].astype(int)
     print(f'new_label: {len(new_label)}, first label: {new_label[0]}')
     
-    # Extract DDI pairs
+    # Extract DDI pairs (not used in main, but kept for consistency)
     DDI = full_pos[:, 1:3].astype(int)
     new_label = np.array(new_label)
     
