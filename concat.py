@@ -55,21 +55,24 @@ def reduc_shape(m):
     for i in range(572):
         try:
             s2 = np.where(m[:, 1] == i)[0]
-
-            # Print shapes for inspection
-            print("Shape of s2:", s2.shape)
-            print("Shape of m[s2[0], 2:]", m[s2[0], 2:].shape)
-
             dd = m[s2[0], 2:]
+
+            # Calculate the maximum length of dd arrays within the group
+            max_len_group = max(len(m[s2[j], 2:]) for j in range(len(s2)))
+
+            # Pad dd to the maximum length of the group
+            dd = np.pad(dd, (0, max_len_group - len(dd)), 'constant', constant_values=(0,))
+
             max_len = max(max_len, len(dd))
             for j in s2[1:]:
                 dd = np.concatenate((dd, m[j, 2:]))
+
         except:
             print("c")
             continue
 
-        # Conditional padding based on data analysis
-        if len(dd) < max_len and all(v != 0 for v in dd):  # Check for non-zero values
+        # Pad dd to the overall maximum length
+        if len(dd) < max_len:
             dd = np.pad(dd, (0, max_len - len(dd)), 'constant', constant_values=(0,))
 
         r.append([i, dd])
