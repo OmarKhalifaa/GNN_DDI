@@ -51,29 +51,26 @@ print(np.array(x1[0,:]))
 
 def reduc_shape(m):
     r = []
-    max_len = 0
+    max_len = 0  # Overall maximum length
+
     for i in range(572):
         try:
             s2 = np.where(m[:, 1] == i)[0]
             dd = m[s2[0], 2:]
 
-            # Group-wise maximum length
+            # Calculate the maximum length within this group
             max_len_group = max(len(m[s2[j], 2:]) for j in range(len(s2)))
-            print(f"Group {i} max length: {max_len_group}")
 
-            # Group-wise padding
-            dd = np.pad(dd, (0, max_len_group - len(dd)), 'constant', constant_values=(0,))
-            print(f"Group {i} dd shape after padding: {dd.shape}")
+            # Pad dd to the overall maximum length
+            dd = np.pad(dd, (0, max_len - len(dd)), 'constant', constant_values=(0,))
 
-            # Concatenation with shape checks
             for j in s2[1:]:
                 dd = np.concatenate((dd, m[j, 2:]))
-                print(f"After concatenating with s2[{j}]: {dd.shape}")
 
                 # Check for shape consistency after concatenation
-                if len(dd) != len(s2) * max_len_group:
+                if len(dd) != len(s2) * max_len:
                     print(f"Shape mismatch in group {i} after concatenating with s2[{j}]")
-                    # Consider handling the inconsistency here, e.g., by truncating or padding
+                    # Handle the mismatch, e.g., by truncating or logging
 
             max_len = max(max_len, len(dd))
 
@@ -81,14 +78,9 @@ def reduc_shape(m):
             print("c")
             continue
 
-        # Overall maximum length padding
-        if len(dd) < max_len:
-            dd = np.pad(dd, (0, max_len - len(dd)), 'constant', constant_values=(0,))
-
         r.append([i, dd])
 
     return np.array(r)
-
 xx1 = np.array(reduc_shape(x1))
 xx2 = np.array(reduc_shape(x2))
 xx3 = np.array(reduc_shape(x3))
