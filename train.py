@@ -4,6 +4,11 @@
 from numpy.random import seed as np_seed
 np_seed(1)
 
+# Uncomment and set TensorFlow seed if needed
+# from tensorflow import set_random_seed
+# set_random_seed(2)
+
+import os
 import csv
 import sqlite3
 import time
@@ -141,6 +146,29 @@ def bring_f(f_item):
         print(f"Error loading features from {file_path}: {e}")
         return []
 
+def initialize_classifier(clf_type):
+    """
+    Initializes the classifier based on the specified type.
+    
+    Parameters:
+        clf_type (str): Type of classifier to initialize.
+    
+    Returns:
+        sklearn classifier: Initialized classifier.
+    """
+    if clf_type == 'RF':
+        return RandomForestClassifier(n_estimators=100, random_state=seed_value)
+    elif clf_type == 'GBDT':
+        return GradientBoostingClassifier(random_state=seed_value)
+    elif clf_type == 'SVM':
+        return SVC(probability=True, random_state=seed_value)
+    elif clf_type == 'FM':
+        return GradientBoostingClassifier(random_state=seed_value)  # Replace with actual FM if different
+    elif clf_type == 'KNN':
+        return KNeighborsClassifier(n_neighbors=4)
+    else:
+        return LogisticRegression(max_iter=1000, random_state=seed_value)
+
 def cross_validation(feature_matrix, label_matrix, clf_type, event_num, seed, CV):
     """
     Performs cross-validation using the specified classifier.
@@ -215,29 +243,6 @@ def cross_validation(feature_matrix, label_matrix, clf_type, event_num, seed, CV
         y_score = np.vstack((y_score, pred_score))
     
     return y_pred, y_score, y_true
-
-def initialize_classifier(clf_type):
-    """
-    Initializes the classifier based on the specified type.
-    
-    Parameters:
-        clf_type (str): Type of classifier to initialize.
-    
-    Returns:
-        sklearn classifier: Initialized classifier.
-    """
-    if clf_type == 'RF':
-        return RandomForestClassifier(n_estimators=100, random_state=seed_value)
-    elif clf_type == 'GBDT':
-        return GradientBoostingClassifier(random_state=seed_value)
-    elif clf_type == 'SVM':
-        return SVC(probability=True, random_state=seed_value)
-    elif clf_type == 'FM':
-        return GradientBoostingClassifier(random_state=seed_value)  # Replace with actual FM if different
-    elif clf_type == 'KNN':
-        return KNeighborsClassifier(n_neighbors=4)
-    else:
-        return LogisticRegression(max_iter=1000, random_state=seed_value)
 
 def evaluate(pred_type, pred_score, y_test, event_num):
     """
