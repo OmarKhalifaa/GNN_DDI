@@ -2,132 +2,211 @@ from pandas import DataFrame
 import numpy as np
 import pandas as pd
 import csv
-x1=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss1.csv", header=None , sep=',')).tolist())
-x2=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss2.csv", header=None , sep=',')).tolist())
-x3=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss3.csv", header=None , sep=',')).tolist())
-x4=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/final_modelss4.csv", header=None , sep=',')).tolist())
+import os
+
+# -----------------------------
+# Function Definitions
+# -----------------------------
+
 def chang_to_array(s):
-  # print(s.shape)
-  final_model = []
-  # print(final_model.shape)
-  for i in s:
-    ev = int(i[0])
-    dr = int(i[1])
-    h = i[2].replace('[',"")
-    h = h.replace('...',"")
-    h = h.replace('\n',"")
-    h = h.replace(']',"")
-    h = h.replace('  '," ")
-    h = h.replace('  '," ")
-    h = h.replace('  '," ")
-    h = h.replace('  '," ")
-    h = h.replace('  '," ")
-    h = h.replace('  '," ")
-    h = h.split(" ")
-    # h.pop(0)
-    for dd,d in enumerate(h):
-      try:
-        d = float(d)
-      except:
-        h.remove(d)
-    h = np.array(h, dtype=np.float64)
-    # print("ff : ",final_model[i,j])
-    con = np.concatenate(([ev,dr],h))
-    final_model.append(con)
-  return np.array(final_model)
+    """
+    Processes the input data by cleaning strings, converting them to floats,
+    and concatenating the first two integer values with the feature vectors.
 
-x1 = chang_to_array(x1)
-print(x1.shape)
-x2 = chang_to_array(x2)
-print(x2.shape)
-x3 = chang_to_array(x3)
-print(x3.shape)
-x4 = chang_to_array(x4)
-print(x4.shape)
+    Parameters:
+    - s (numpy.ndarray): Input data array.
 
-print(int(x1[0][1]))
-print(len(x1[0,:]))
-print(np.array(x1[0,:]))
+    Returns:
+    - numpy.ndarray: Processed data array with shape (num_samples, 2 + feature_length).
+    """
+    final_model = []
+    for idx, i in enumerate(s):
+        try:
+            ev = int(i[0])
+            dr = int(i[1])
+            h = i[2].replace('[', "").replace('...', "") \
+                   .replace('\n', "").replace(']', "") \
+                   .replace('  ', " ").strip().split(" ")
+            # Convert to floats, removing any empty strings
+            h = [float(d) for d in h if d]
+            h = np.array(h, dtype=np.float64)
+            # Concatenate ev, dr with h
+            con = np.concatenate(([ev, dr], h))
+            final_model.append(con)
+        except Exception as e:
+            print(f"Error processing row {idx}: {e}")
+            continue  # Skip problematic rows
+    return np.array(final_model)
 
 def reduc_shape(m):
-  r = []
-  for i in range(572):
-    try:
-      s2=np.where(m[:,1]==i)[0]
-      dd = m[s2[0],2:]
-      for j in s2[1:]:
-        # dd = np.mean((dd,m[j,2:]), axis=0)
-        dd = np.concatenate((dd,m[j,2:]))
-      r.append([i,dd])
-    except:
-      print("c")
-  return np.array(r)
-xx1 = np.array(reduc_shape(x1))
-xx2 = np.array(reduc_shape(x2))
-xx3 = np.array(reduc_shape(x3))
-xx4 = np.array(reduc_shape(x4))
+    """
+    Aggregates feature vectors for each unique index by computing their mean.
 
-print("xx : ",xx1.shape)
-print(len(xx1))
-print(len(xx1[2][1]))
-print(xx1[2])
-print(xx1[336])
-print(65*32)
+    Parameters:
+    - m (numpy.ndarray): Input data array with at least three columns.
+
+    Returns:
+    - list of lists: Each sublist contains an index and its aggregated feature vector.
+    """
+    r = []
+    for i in range(572):
+        s2 = np.where(m[:, 1] == i)[0]
+        if len(s2) == 0:
+            # No entries found for this index; optionally, handle as needed
+            continue
+        # Aggregate using mean to maintain consistent feature size
+        dd = np.mean(m[s2, 2:], axis=0)
+        r.append([i, dd])
+    return r
 
 def make_dic(x):
-  s_dic = dict()
-  for i in x:
-    s_dic[i[0]]=i[1]
-    # print(i[1][0])
-  return s_dic
+    """
+    Converts a list of [index, feature_vector] into a dictionary.
 
-xs1 = (make_dic(xx1))
-xs2 = (make_dic(xx2))
-xs3 = (make_dic(xx3))
-xs4 = (make_dic(xx4))
-print(len(xs1[0]))
+    Parameters:
+    - x (list of lists): Each sublist contains an index and its feature vector.
 
-all_fectuer = []
-all_fectuer.append(xs1)
-all_fectuer.append(xs2)
-all_fectuer.append(xs3)
-all_fectuer.append(xs4)
-all_fectuer = np.array(all_fectuer)
-print(all_fectuer.shape)
-print(len(all_fectuer[0]))
-print(len(all_fectuer[0][0]))
-print(all_fectuer[0][0][0])
-# print(all_fectuer[0][336][0])
-print(type(all_fectuer[0]))
+    Returns:
+    - dict: Mapping from index to feature vector.
+    """
+    s_dic = {}
+    for item in x:
+        index = int(item[0])
+        feature_vector = item[1]
+        s_dic[index] = feature_vector
+    return s_dic
 
-full_pos=np.array(np.array(pd.read_csv("/DDI/full_pos.txt", header=None , sep=' ')).tolist())
-print(full_pos.shape)
+def multiply_features(f_i, DDI):
+    """
+    Multiplies feature vectors for pairs of indices specified in DDI.
 
-DDI = full_pos[:,1:3]
-print(DDI.shape)
-print(65*570)
+    Parameters:
+    - f_i (dict): Dictionary mapping indices to their feature vectors.
+    - DDI (numpy.ndarray): Array of index pairs.
 
-print(all_fectuer.shape)
-f_i1 = all_fectuer[0]
-f_i2 = all_fectuer[1]
-f_i3 = all_fectuer[2]
-f_i4 = all_fectuer[3]
+    Returns:
+    - numpy.ndarray: Array of multiplied feature vectors.
+    """
+    features = []
+    for idx, d in enumerate(DDI):
+        d0, d1 = int(d[0]), int(d[1])
+        feat0 = f_i.get(d0, np.zeros_like(next(iter(f_i.values()), [])))
+        feat1 = f_i.get(d1, np.zeros_like(next(iter(f_i.values()), [])))
+        feature = np.multiply(feat0, feat1)
+        features.append(feature)
+        if idx < 5:  # Debug: Print first few feature multiplications
+            print(f"Multiplying indices {d0} and {d1}: {feature}")
+    return np.array(features)
 
-new_feature1 = ( np.array(np.multiply(f_i1[d[0]],f_i1[d[1]])).tolist() for d in (DDI) )
-new_feature2 = ( np.array(np.multiply(f_i2[d[0]],f_i2[d[1]])).tolist() for d in (DDI) )
-new_feature3 = ( np.array(np.multiply(f_i3[d[0]],f_i3[d[1]])).tolist() for d in (DDI) )
-new_feature4 = ( np.array(np.multiply(f_i4[d[0]],f_i4[d[1]])).tolist() for d in (DDI) )
+# -----------------------------
+# Configuration: Define Paths
+# -----------------------------
 
-df = pd.DataFrame(np.array(list(new_feature1)))
-df.to_csv('/DDI/data5/t_c_m_1_32.txt', header=None, index=None, sep=' ')
-df = pd.DataFrame(np.array(list(new_feature2)))
-df.to_csv('/DDI/data5/t_c_m_2_32.txt', header=None, index=None, sep=' ')
-df = pd.DataFrame(np.array(list(new_feature3)))
-df.to_csv('/DDI/data5/t_c_m_3_32.txt', header=None, index=None, sep=' ')
-df = pd.DataFrame(np.array(list(new_feature4)))
-df.to_csv('/DDI/data5/t_c_m_4_32.txt', header=None, index=None, sep=' ')
+# Base directory
+base_dir = "/kaggle/working/GNN_DDI/DDI/data5/"
 
-print(len(all_fectuer[0][0]),len(DDI))
-full_pos = 0
-x1 ,x2 ,x3 ,x4 ,xx1 ,xx2 ,xx3 ,xx4,xs1 ,xs2 ,xs3 ,xs4 = 0,0,0,0,0,0,0,0,0,0,0,0
-full_dataframe,f_dataframe,featuers,drugs,a,x=0,0,0,0,0,0
+# Input CSV file paths
+file_paths = [
+    os.path.join(base_dir, "final_modelssd1_d_32.csv"),
+    os.path.join(base_dir, "final_modelssd2_d_32.csv"),
+    os.path.join(base_dir, "final_modelssd3_d_32.csv"),
+    os.path.join(base_dir, "final_modelssd4_d_32.csv")
+]
+
+# Output file paths
+output_paths = [
+    os.path.join(base_dir, "t_c_m_1_32.txt"),
+    os.path.join(base_dir, "t_c_m_2_32.txt"),
+    os.path.join(base_dir, "t_c_m_3_32.txt"),
+    os.path.join(base_dir, "t_c_m_4_32.txt")
+]
+
+# Path to full_pos.txt
+full_pos_path = os.path.join(base_dir, "full_pos.txt")
+
+# -----------------------------
+# Data Loading and Processing
+# -----------------------------
+
+# Process each input file using chang_to_array
+processed_data = []
+for path in file_paths:
+    try:
+        data = pd.read_csv(path, header=None, sep=',').values
+        array = chang_to_array(data)
+        print(f"{path} shape after processing: {array.shape}")
+        processed_data.append(array)
+    except Exception as e:
+        print(f"Error loading {path}: {e}")
+
+# Unpack processed data
+if len(processed_data) != 4:
+    print("Error: Not all input files were processed successfully.")
+    # Handle the error as needed
+else:
+    x1, x2, x3, x4 = processed_data
+
+    # Reduce shape with aggregation
+    reduced_data = []
+    for idx, x in enumerate([x1, x2, x3, x4], start=1):
+        r = reduc_shape(x)
+        reduced_data.append(r)
+        print(f"Reduced data {idx} length: {len(r)}")
+
+    # Convert reduced data to dictionaries
+    xs1, xs2, xs3, xs4 = [make_dic(r) for r in reduced_data]
+    print(f"Length of xs1: {len(xs1)}")
+
+    # Combine all feature dictionaries into a list (not converting to np.array)
+    all_features = [xs1, xs2, xs3, xs4]
+    print(f"Number of feature dictionaries: {len(all_features)}")
+    print(f"First 5 keys in xs1: {list(xs1.keys())[:5]}")
+
+    # -----------------------------
+    # DDI Data Processing
+    # -----------------------------
+
+    try:
+        full_pos = pd.read_csv(full_pos_path, header=None, sep=' ').values
+        print(f"full_pos shape: {full_pos.shape}")
+    except Exception as e:
+        print(f"Error loading full_pos.txt: {e}")
+        full_pos = np.array([])
+
+    if full_pos.size > 0:
+        DDI = full_pos[:, 1:3]
+        print(f"DDI shape: {DDI.shape}")
+    else:
+        DDI = np.array([])
+        print("DDI data is empty.")
+
+    # -----------------------------
+    # Feature Multiplication and Saving
+    # -----------------------------
+
+    if DDI.size > 0:
+        # Multiply features for each feature dictionary
+        new_feature1 = multiply_features(xs1, DDI)
+        new_feature2 = multiply_features(xs2, DDI)
+        new_feature3 = multiply_features(xs3, DDI)
+        new_feature4 = multiply_features(xs4, DDI)
+
+        multiplied_features = [new_feature1, new_feature2, new_feature3, new_feature4]
+
+        # Save multiplied features to CSV
+        for feature, path in zip(multiplied_features, output_paths):
+            try:
+                pd.DataFrame(feature).to_csv(path, header=None, index=None, sep=' ')
+                print(f"Saved multiplied features to {path} with shape {feature.shape}")
+            except Exception as e:
+                print(f"Error saving to {path}: {e}")
+    else:
+        print("No DDI data to process.")
+
+    # -----------------------------
+    # Cleanup (Optional)
+    # -----------------------------
+
+    # Free up memory by deleting large variables
+    del x1, x2, x3, x4, reduced_data, xs1, xs2, xs3, xs4, all_features, full_pos, DDI
+    print("Cleanup completed. Large variables have been deleted.")
