@@ -57,21 +57,24 @@ def reduc_shape(m):
             s2 = np.where(m[:, 1] == i)[0]
             dd = m[s2[0], 2:]
 
-            # Calculate the maximum length of dd arrays within the group
+            # Group-wise maximum length
             max_len_group = max(len(m[s2[j], 2:]) for j in range(len(s2)))
+            print(f"Group {i} max length: {max_len_group}")
 
-            # Pad dd to the maximum length of the group
+            # Group-wise padding
             dd = np.pad(dd, (0, max_len_group - len(dd)), 'constant', constant_values=(0,))
+            print(f"Group {i} dd shape after padding: {dd.shape}")
 
             max_len = max(max_len, len(dd))
             for j in s2[1:]:
                 dd = np.concatenate((dd, m[j, 2:]))
+                print(f"After concatenating with s2[{j}]: {dd.shape}")
 
         except:
             print("c")
             continue
 
-        # Pad dd to the overall maximum length
+        # Overall maximum length padding
         if len(dd) < max_len:
             dd = np.pad(dd, (0, max_len - len(dd)), 'constant', constant_values=(0,))
 
