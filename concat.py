@@ -50,18 +50,26 @@ print(len(x1[0,:]))
 print(np.array(x1[0,:]))
 
 def reduc_shape(m):
-  r = []
-  for i in range(572):
-    try:
-      s2=np.where(m[:,1]==i)[0]
-      dd = m[s2[0],2:]
-      for j in s2[1:]:
-        # dd = np.mean((dd,m[j,2:]), axis=0)
-        dd = np.concatenate((dd,m[j,2:]))
-      r.append([i,dd])
-    except:
-      print("c")
-  return np.array(r)
+    r = []
+    max_len = 0
+    for i in range(572):
+        try:
+            s2 = np.where(m[:, 1] == i)[0]
+            dd = m[s2[0], 2:]
+            max_len = max(max_len, len(dd))
+            for j in s2[1:]:
+                dd = np.concatenate((dd, m[j, 2:]))
+        except:
+            print("c")
+            continue
+
+        # Pad dd to the maximum length
+        if len(dd) < max_len:
+            dd = np.pad(dd, (0, max_len - len(dd)), 'constant', constant_values=(0,))
+
+        r.append([i, dd])
+
+    return np.array(r)
 
 xx1 = np.array(reduc_shape(x1))
 xx2 = np.array(reduc_shape(x2))
