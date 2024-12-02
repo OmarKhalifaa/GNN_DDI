@@ -62,8 +62,6 @@ def reduc_shape(m):
     except:
       print("c")
   return np.array(r)
-
-    return np.array(r)
 xx1 = np.array(reduc_shape(x1))
 xx2 = np.array(reduc_shape(x2))
 xx3 = np.array(reduc_shape(x3))
