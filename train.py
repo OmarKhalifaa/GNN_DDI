@@ -29,7 +29,7 @@ from keras.callbacks import EarlyStopping
 # from tf.keras.utils import plot_model
 import tensorflow as tf
 
-full_pos=np.array(np.array(pd.read_csv("/content/drive/MyDrive/DDI/full_pos.txt", header=None , sep=' ')).tolist())
+full_pos=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/full_pos2.txt", header=None , sep=' ')).tolist())
 new_label = []
 for i in full_pos:
     new_label.append(i[0])
@@ -44,7 +44,7 @@ clf = "DDIMDL"
 CV = 5
 seed = 0
 f_matrix = [1,2,3,4]
-featureName = "/DDI/data5/G_allf_32_cm"
+featureName = "/kaggle/working/GNN_DDI/DDI/data5/G_allf_32_cm"
 
 def DNN():
     train_input = Input(shape=(vector_size,), name='Inputlayer')
@@ -75,7 +75,7 @@ def get_index(label_matrix, event_num, seed, CV):
     return index_all_class
 
 def bring_f(f_item):
-  full_dataframe = pd.read_csv("/DDI/data5/t_c_m_"+f_item+"_32.txt", header=None , sep=' ')
+  full_dataframe = pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/t_c_m_"+f_item+"_32.txt", header=None , sep=' ')
   x1=np.array(np.array(full_dataframe).tolist())
   full_dataframe = 0
   print(x1.shape)
