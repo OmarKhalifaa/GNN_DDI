@@ -83,10 +83,15 @@ featureName = os.path.join(data5_dir, "G_allf_32_cm")
 # Function Definitions
 # -----------------------------
 
-def DNN():
+def DNN(vector_size=32, event_num=65, droprate=0.3):
     """
     Defines and compiles a Deep Neural Network model.
     
+    Parameters:
+        vector_size (int): Size of the input feature vector.
+        event_num (int): Number of unique events/classes.
+        droprate (float): Dropout rate for regularization.
+        
     Returns:
         keras.Model: Compiled DNN model.
     """
@@ -215,7 +220,7 @@ def cross_validation(feature_matrix, label_matrix, clf_type, event_num, seed, CV
             y_test_one_hot = label_binarize(y_test, classes=np.arange(event_num))
             
             if clf_type == 'DDIMDL':
-                dnn = DNN()
+                dnn = DNN(vector_size=vector_size, event_num=event_num, droprate=droprate)
                 early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='auto')
                 dnn.fit(
                     x_train, y_train_one_hot, 
@@ -398,9 +403,55 @@ def main():
     save_result(featureName, 'all', clf, all_result)
     save_result(featureName, 'each', clf, each_result)
     
+    # -----------------------------
+    # Train Final Model on All Data and Save It
+    # -----------------------------
+    
+    print("\nTraining final model on all data...")
+    feature_list = []
+    for f_item in f_matrix:
+        features = bring_f(str(f_item))
+        if not features:
+            continue
+        feature_list.append(features)
+    
+    if feature_list:
+        try:
+            # Concatenate features horizontally (feature-wise)
+            X_final = np.hstack([np.array(f) for f in feature_list])
+            y_final = new_label
+            print(f"Final feature matrix shape: {X_final.shape}")
+            
+            # One-hot encoding
+            y_final_one_hot = label_binarize(y_final, classes=np.arange(event_num))
+            
+            # Initialize and compile the final DNN model
+            final_model = DNN(vector_size=X_final.shape[1], event_num=event_num, droprate=droprate)
+            print("Final DNN model architecture:")
+            final_model.summary()
+            
+            # Train the final model
+            early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='auto')
+            final_model.fit(
+                X_final, y_final_one_hot,
+                batch_size=128, epochs=100,
+                validation_split=0.2,
+                callbacks=[early_stopping],
+                verbose=1  # Show training progress
+            )
+            
+            # Save the trained model to the base directory
+            final_model_path = os.path.join(base_dir, "model_trained_final.h5")
+            final_model.save(final_model_path)
+            print(f"Final model saved to {final_model_path}")
+        except Exception as e:
+            print(f"Error during final model training or saving: {e}")
+    else:
+        print("No features loaded for final model training.")
+    
     # End timing and print elapsed time
     elapsed_time = time.process_time() - start
-    print(f"Time used: {elapsed_time:.2f} seconds")
+    print(f"\nTime used: {elapsed_time:.2f} seconds")
 
 if __name__ == "__main__":
     main()
