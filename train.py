@@ -1,7 +1,9 @@
-from numpy.random import seed
-seed(1)
-#from tensorflow import set_random_seed
-#set_random_seed(2)
+# -----------------------------
+# Import Statements
+# -----------------------------
+from numpy.random import seed as np_seed
+np_seed(1)
+
 import csv
 import sqlite3
 import time
@@ -10,43 +12,79 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
-from sklearn.metrics import auc
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import precision_score
-from sklearn.metrics import precision_recall_curve
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    auc,
+    roc_auc_score,
+    accuracy_score,
+    recall_score,
+    f1_score,
+    precision_score,
+    precision_recall_curve,
+    roc_curve
+)
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.preprocessing import label_binarize
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import GradientBoostingClassifier
 from keras.models import Model
-from keras.layers import Dense, Dropout, Input, Activation, BatchNormalization, LSTM, MaxPooling1D, Conv1D
+from keras.layers import (
+    Dense, Dropout, Input, Activation, BatchNormalization, LSTM, 
+    MaxPooling1D, Conv1D
+)
 from keras.callbacks import EarlyStopping
-# from tf.keras.utils import plot_model
 import tensorflow as tf
 
-full_pos=np.array(np.array(pd.read_csv("/kaggle/working/GNN_DDI/DDI/full_pos2.txt", header=None , sep=' ')).tolist())
-new_label = []
-for i in full_pos:
-    new_label.append(i[0])
-print('new_label : ',len(new_label),(new_label[0]))
-DDI = full_pos[:,1:3]
-new_label = np.array(new_label)
+# -----------------------------
+# Configuration: Define Paths and Parameters
+# -----------------------------
 
+# Base directory (parent of data5 and full_pos2.txt)
+base_dir = "/kaggle/working/GNN_DDI/DDI/"
+
+# Data5 subdirectory
+data5_dir = os.path.join(base_dir, "data5/")
+
+# Input CSV file paths within data5
+file_paths = [
+    os.path.join(data5_dir, "final_modelssd1_d_32.csv"),
+    os.path.join(data5_dir, "final_modelssd2_d_32.csv"),
+    os.path.join(data5_dir, "final_modelssd3_d_32.csv"),
+    os.path.join(data5_dir, "final_modelssd4_d_32.csv")
+]
+
+# Output file paths within data5
+output_paths = [
+    os.path.join(data5_dir, "t_c_m_1_32.txt"),
+    os.path.join(data5_dir, "t_c_m_2_32.txt"),
+    os.path.join(data5_dir, "t_c_m_3_32.txt"),
+    os.path.join(data5_dir, "t_c_m_4_32.txt")
+]
+
+# Path to full_pos2.txt in base_dir
+full_pos_path = os.path.join(base_dir, "full_pos2.txt")
+
+# Feature-related parameters
 event_num = 65
 droprate = 0.3
 vector_size = 2080
 clf = "DDIMDL"
 CV = 5
-seed = 0
-f_matrix = [1,2,3,4]
-featureName = "/kaggle/working/GNN_DDI/DDI/data5/G_allf_32_cm"
+seed_value = 0  # Renamed to avoid conflict with function 'seed'
+f_matrix = [1, 2, 3, 4]
+featureName = os.path.join(data5_dir, "G_allf_32_cm")
+
+# -----------------------------
+# Function Definitions
+# -----------------------------
 
 def DNN():
+    """
+    Defines and compiles a Deep Neural Network model.
+    
+    Returns:
+        keras.Model: Compiled DNN model.
+    """
     train_input = Input(shape=(vector_size,), name='Inputlayer')
     train_in = Dense(512, activation='relu')(train_input)
     train_in = BatchNormalization()(train_in)
@@ -57,31 +95,67 @@ def DNN():
     train_in = Dense(event_num)(train_in)
     out = Activation('softmax')(train_in)
     model = Model(inputs=train_input, outputs=out)
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy']) # binary_crossentropy
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
-
-
 def get_index(label_matrix, event_num, seed, CV):
-    index_all_class = np.zeros(len(label_matrix))
+    """
+    Generates cross-validation indices for each class.
+    
+    Parameters:
+        label_matrix (numpy.ndarray): Array of labels.
+        event_num (int): Number of unique events/classes.
+        seed (int): Random seed for reproducibility.
+        CV (int): Number of cross-validation splits.
+    
+    Returns:
+        numpy.ndarray: Array indicating the fold index for each sample.
+    """
+    index_all_class = np.zeros(len(label_matrix), dtype=int)
     for j in range(event_num):
-        index = np.where(label_matrix == j)
+        indices = np.where(label_matrix == j)[0]
+        if len(indices) == 0:
+            continue  # Skip if no samples for this class
         kf = KFold(n_splits=CV, shuffle=True, random_state=seed)
-        k_num = 0
-        for train_index, test_index in kf.split(range(len(index[0]))):
-            index_all_class[index[0][test_index]] = k_num
-            k_num += 1
-
+        for k_num, (train_index, test_index) in enumerate(kf.split(indices)):
+            index_all_class[indices[test_index]] = k_num
     return index_all_class
 
 def bring_f(f_item):
-  full_dataframe = pd.read_csv("/kaggle/working/GNN_DDI/DDI/data5/t_c_m_"+f_item+"_32.txt", header=None , sep=' ')
-  x1=np.array(np.array(full_dataframe).tolist())
-  full_dataframe = 0
-  print(x1.shape)
-  return x1.tolist()
+    """
+    Loads and processes feature data from a specific file.
+    
+    Parameters:
+        f_item (str): Feature identifier (e.g., '1', '2', '3', '4').
+    
+    Returns:
+        list: List of feature vectors.
+    """
+    file_path = os.path.join(data5_dir, f"t_c_m_{f_item}_32.txt")
+    try:
+        full_dataframe = pd.read_csv(file_path, header=None, sep=' ')
+        x1 = full_dataframe.values  # More efficient than np.array(full_dataframe).tolist()
+        print(f"Loaded features from {file_path}: {x1.shape}")
+        return x1.tolist()
+    except Exception as e:
+        print(f"Error loading features from {file_path}: {e}")
+        return []
 
 def cross_validation(feature_matrix, label_matrix, clf_type, event_num, seed, CV):
+    """
+    Performs cross-validation using the specified classifier.
+    
+    Parameters:
+        feature_matrix (list or list of lists): List of feature identifiers.
+        label_matrix (numpy.ndarray): Array of labels.
+        clf_type (str): Type of classifier to use.
+        event_num (int): Number of unique events/classes.
+        seed (int): Random seed for reproducibility.
+        CV (int): Number of cross-validation splits.
+    
+    Returns:
+        tuple: Predicted labels, prediction scores, and true labels.
+    """
     all_eval_type = 11
     result_all = np.zeros((all_eval_type, 1), dtype=float)
     each_eval_type = 6
@@ -91,84 +165,102 @@ def cross_validation(feature_matrix, label_matrix, clf_type, event_num, seed, CV
     y_score = np.zeros((0, event_num), dtype=float)
     index_all_class = get_index(label_matrix, event_num, seed, CV)
     matrix = []
-    if type(feature_matrix) != list:
+    if not isinstance(feature_matrix, list):
         matrix.append(feature_matrix)
-        # =============================================================================
-        #     elif len(np.shape(feature_matrix))==3:
-        #         for i in range((np.shape(feature_matrix)[-1])):
-        #             matrix.append(feature_matrix[:,:,i])
-        # =============================================================================
         feature_matrix = matrix
 
-#     dnn = DNN()
-#     plot_model(dnn, show_shapes=True, to_file='ConvLSTM.png')
-#     tf.keras.utils.plot_model(dnn, show_shapes=True, to_file='/content/drive/MyDrive/DDI/ConvLSTM.png')   
-#     print(dnn.summary())
     for k in range(CV):
-        print("k : ",k)
-        train_index = np.where(index_all_class != k)
-        test_index = np.where(index_all_class == k)
-        pred = np.zeros((len(test_index[0]), event_num), dtype=float)
-        # dnn=DNN()
-        for i in range(len(feature_matrix)):
-            print("f : ",i)
-            xx = bring_f(str(feature_matrix[i]))
-            xx = np.array(xx)
+        print(f"Cross-Validation Fold {k+1}/{CV}")
+        train_index = np.where(index_all_class != k)[0]
+        test_index = np.where(index_all_class == k)[0]
+        pred = np.zeros((len(test_index), event_num), dtype=float)
+        
+        for i, f_item in enumerate(feature_matrix):
+            print(f"Processing Feature {i+1}/{len(feature_matrix)}: {f_item}")
+            features = bring_f(str(f_item))
+            if not features:
+                continue  # Skip if no features loaded
+            xx = np.array(features)
             x_train = xx[train_index]
             x_test = xx[test_index]
-            xx = 0
             y_train = label_matrix[train_index]
-            # one-hot encoding
-            y_train_one_hot = np.array(y_train)
-            y_train_one_hot = (np.arange(y_train_one_hot.max() + 1) == y_train[:, None]).astype(dtype='float32')
             y_test = label_matrix[test_index]
-            # one-hot encoding
-            y_test_one_hot = np.array(y_test)
-            y_test_one_hot = (np.arange(y_test_one_hot.max() + 1) == y_test[:, None]).astype(dtype='float32')
+            
+            # One-hot encoding
+            y_train_one_hot = label_binarize(y_train, classes=np.arange(event_num))
+            y_test_one_hot = label_binarize(y_test, classes=np.arange(event_num))
+            
             if clf_type == 'DDIMDL':
                 dnn = DNN()
                 early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='auto')
-                dnn.fit(x_train, y_train_one_hot, batch_size=128, epochs=100,
-                        validation_data=(x_test, y_test_one_hot),
-                        callbacks=[early_stopping])
-                x_train = 0
-                pred += dnn.predict(x_test)
-                x_test = 0
-                continue
-            elif clf_type == 'RF':
-                clf = RandomForestClassifier(n_estimators=100)
-            elif clf_type == 'GBDT':
-                clf = GradientBoostingClassifier()
-            elif clf_type == 'SVM':
-                clf = SVC(probability=True)
-            elif clf_type == 'FM':
-                clf = GradientBoostingClassifier()
-            elif clf_type == 'KNN':
-                clf = KNeighborsClassifier(n_neighbors=4)
+                dnn.fit(
+                    x_train, y_train_one_hot, 
+                    batch_size=128, epochs=100,
+                    validation_data=(x_test, y_test_one_hot),
+                    callbacks=[early_stopping],
+                    verbose=0  # Suppress training output
+                )
+                pred += dnn.predict(x_test, verbose=0)
+                del dnn  # Free memory
             else:
-                clf = LogisticRegression()
-            clf.fit(x_train, y_train)
-            pred += clf.predict_proba(x_test)
-
-        dnn = 0
-        pred_score = pred / len(feature_matrix)
+                # Initialize the specified classifier
+                clf = initialize_classifier(clf_type)
+                clf.fit(x_train, y_train)
+                pred += clf.predict_proba(x_test)
+        
+        pred_score = pred / len(feature_matrix)  # Average predictions
         pred_type = np.argmax(pred_score, axis=1)
-        y_true = np.hstack((y_true, y_test))
+        y_true = np.hstack((y_true, label_matrix[test_index]))
         y_pred = np.hstack((y_pred, pred_type))
-        y_score = np.row_stack((y_score, pred_score))
+        y_score = np.vstack((y_score, pred_score))
+    
     return y_pred, y_score, y_true
 
+def initialize_classifier(clf_type):
+    """
+    Initializes the classifier based on the specified type.
+    
+    Parameters:
+        clf_type (str): Type of classifier to initialize.
+    
+    Returns:
+        sklearn classifier: Initialized classifier.
+    """
+    if clf_type == 'RF':
+        return RandomForestClassifier(n_estimators=100, random_state=seed_value)
+    elif clf_type == 'GBDT':
+        return GradientBoostingClassifier(random_state=seed_value)
+    elif clf_type == 'SVM':
+        return SVC(probability=True, random_state=seed_value)
+    elif clf_type == 'FM':
+        return GradientBoostingClassifier(random_state=seed_value)  # Replace with actual FM if different
+    elif clf_type == 'KNN':
+        return KNeighborsClassifier(n_neighbors=4)
+    else:
+        return LogisticRegression(max_iter=1000, random_state=seed_value)
 
 def evaluate(pred_type, pred_score, y_test, event_num):
+    """
+    Evaluates the performance of the predictions.
+    
+    Parameters:
+        pred_type (numpy.ndarray): Predicted class labels.
+        pred_score (numpy.ndarray): Prediction scores/probabilities.
+        y_test (numpy.ndarray): True class labels.
+        event_num (int): Number of unique events/classes.
+    
+    Returns:
+        tuple: Overall results and per-event results.
+    """
     all_eval_type = 11
     result_all = np.zeros((all_eval_type, 1), dtype=float)
     each_eval_type = 6
     result_eve = np.zeros((event_num, each_eval_type), dtype=float)
+    
     y_one_hot = label_binarize(y_test, classes=np.arange(event_num))
     pred_one_hot = label_binarize(pred_type, classes=np.arange(event_num))
-
-    precision, recall, th = multiclass_precision_recall_curve(y_one_hot, pred_score)
-
+    
+    # Overall Metrics
     result_all[0] = accuracy_score(y_test, pred_type)
     result_all[1] = roc_aupr_score(y_one_hot, pred_score, average='micro')
     result_all[2] = roc_aupr_score(y_one_hot, pred_score, average='macro')
@@ -180,97 +272,43 @@ def evaluate(pred_type, pred_score, y_test, event_num):
     result_all[8] = precision_score(y_test, pred_type, average='macro')
     result_all[9] = recall_score(y_test, pred_type, average='micro')
     result_all[10] = recall_score(y_test, pred_type, average='macro')
+    
+    # Per-Event Metrics
     for i in range(event_num):
-        result_eve[i, 0] = accuracy_score(y_one_hot.take([i], axis=1).ravel(), pred_one_hot.take([i], axis=1).ravel())
-        result_eve[i, 1] = roc_aupr_score(y_one_hot.take([i], axis=1).ravel(), pred_one_hot.take([i], axis=1).ravel(),
-                                          average=None)
-        result_eve[i, 2] = roc_auc_score(y_one_hot.take([i], axis=1).ravel(), pred_one_hot.take([i], axis=1).ravel(),
-                                         average=None)
-        result_eve[i, 3] = f1_score(y_one_hot.take([i], axis=1).ravel(), pred_one_hot.take([i], axis=1).ravel(),
-                                    average='binary')
-        result_eve[i, 4] = precision_score(y_one_hot.take([i], axis=1).ravel(), pred_one_hot.take([i], axis=1).ravel(),
-                                           average='binary')
-        result_eve[i, 5] = recall_score(y_one_hot.take([i], axis=1).ravel(), pred_one_hot.take([i], axis=1).ravel(),
-                                        average='binary')
+        y_true_event = y_one_hot[:, i]
+        y_pred_event = pred_one_hot[:, i]
+        if len(np.unique(y_true_event)) > 1:
+            result_eve[i, 0] = accuracy_score(y_true_event, y_pred_event)
+            result_eve[i, 1] = roc_aupr_score(y_true_event, pred_score[:, i], average=None)
+            result_eve[i, 2] = roc_auc_score(y_true_event, pred_score[:, i], average=None)
+            result_eve[i, 3] = f1_score(y_true_event, y_pred_event, average='binary')
+            result_eve[i, 4] = precision_score(y_true_event, y_pred_event, average='binary')
+            result_eve[i, 5] = recall_score(y_true_event, y_pred_event, average='binary')
+        else:
+            # Handle cases with only one class present
+            result_eve[i, :] = np.nan  # Or any other placeholder
+    
     return [result_all, result_eve]
 
-def calculate_metric_score(real_labels,predict_score):
-    # Evaluate the prediction performance
-    precision, recall, pr_thresholds = precision_recall_curve(real_labels, predict_score)
-    aupr_score = auc(recall, precision)
-    all_F_measure = np.zeros(len(pr_thresholds))
-    for k in range(0, len(pr_thresholds)):
-       if (precision[k] + recall[k]) > 0:
-           all_F_measure[k] = 2 * precision[k] * recall[k] / (precision[k] + recall[k])
-       else:
-           all_F_measure[k] = 0
-    print("all_F_measure: ")
-    print(all_F_measure)
-    max_index = all_F_measure.argmax()
-    threshold = pr_thresholds[max_index]
-    fpr, tpr, auc_thresholds = roc_curve(real_labels, predict_score)
-    auc_score = auc(fpr, tpr)
-
-    f = f1_score(real_labels, predict_score)
-    print("F_measure:"+str(all_F_measure[max_index]))
-    print("f-score:"+str(f))
-    accuracy = accuracy_score(real_labels, predict_score)
-    precision = precision_score(real_labels, predict_score)
-    recall = recall_score(real_labels, predict_score)
-    print('results for feature:' + 'weighted_scoring')
-    print(    '************************AUC score:%.3f, AUPR score:%.3f, precision score:%.3f, recall score:%.3f, f score:%.3f,accuracy:%.3f************************' % (
-        auc_score, aupr_score, precision, recall, f, accuracy))
-    results = [auc_score, aupr_score, precision, recall,  f, accuracy]
-
-    return results
-
-def self_metric_calculate(y_true, pred_type):
-    y_true = y_true.ravel()
-    y_pred = pred_type.ravel()
-    if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
-    if y_pred.ndim == 1:
-        y_pred = y_pred.reshape((-1, 1))
-    y_true_c = y_true.take([0], axis=1).ravel()
-    y_pred_c = y_pred.take([0], axis=1).ravel()
-    TP = 0
-    TN = 0
-    FN = 0
-    FP = 0
-    for i in range(len(y_true_c)):
-        if (y_true_c[i] == 1) and (y_pred_c[i] == 1):
-            TP += 1
-        if (y_true_c[i] == 1) and (y_pred_c[i] == 0):
-            FN += 1
-        if (y_true_c[i] == 0) and (y_pred_c[i] == 1):
-            FP += 1
-        if (y_true_c[i] == 0) and (y_pred_c[i] == 0):
-            TN += 1
-    print("TP=", TP, "FN=", FN, "FP=", FP, "TN=", TN)
-    return (TP / (TP + FP), TP / (TP + FN))
-
-
-def multiclass_precision_recall_curve(y_true, y_score):
-    y_true = y_true.ravel()
-    y_score = y_score.ravel()
-    if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
-    if y_score.ndim == 1:
-        y_score = y_score.reshape((-1, 1))
-    y_true_c = y_true.take([0], axis=1).ravel()
-    y_score_c = y_score.take([0], axis=1).ravel()
-    precision, recall, pr_thresholds = precision_recall_curve(y_true_c, y_score_c)
-    return (precision, recall, pr_thresholds)
-
-
 def roc_aupr_score(y_true, y_score, average="macro"):
-    def _binary_roc_aupr_score(y_true, y_score):
-        precision, recall, pr_thresholds = precision_recall_curve(y_true, y_score)
-        return auc(recall, precision) #=========== , reorder=True
+    """
+    Calculates the AUPR score for binary or multiclass classification.
+    
+    Parameters:
+        y_true (numpy.ndarray): True binary labels in one-hot format.
+        y_score (numpy.ndarray): Predicted scores/probabilities.
+        average (str): Averaging method ('binary', 'micro', 'macro').
+    
+    Returns:
+        float: AUPR score.
+    """
+    def _binary_roc_aupr_score(y_true_bin, y_score_bin):
+        precision, recall, _ = precision_recall_curve(y_true_bin, y_score_bin)
+        return auc(recall, precision)
 
-    def _average_binary_score(binary_metric, y_true, y_score, average):  # y_true= y_one_hot
+    def _average_binary_score(binary_metric, y_true, y_score, average):
         if average == "binary":
-            return binary_metric(y_true, y_score)
+            return binary_metric(y_true[:, 0], y_score[:, 0])
         if average == "micro":
             y_true = y_true.ravel()
             y_score = y_score.ravel()
@@ -281,27 +319,87 @@ def roc_aupr_score(y_true, y_score, average="macro"):
         n_classes = y_score.shape[1]
         score = np.zeros((n_classes,))
         for c in range(n_classes):
-            y_true_c = y_true.take([c], axis=1).ravel()
-            y_score_c = y_score.take([c], axis=1).ravel()
-            score[c] = binary_metric(y_true_c, y_score_c)
-        return np.average(score)
+            y_true_c = y_true[:, c]
+            y_score_c = y_score[:, c]
+            if len(np.unique(y_true_c)) > 1:
+                score[c] = binary_metric(y_true_c, y_score_c)
+            else:
+                score[c] = np.nan  # Undefined AUPR
+        if average == "macro":
+            return np.nanmean(score)
+        elif average == "micro":
+            return np.nanmean(score)
+        else:
+            return score
 
     return _average_binary_score(_binary_roc_aupr_score, y_true, y_score, average)
 
 def save_result(feature_name, result_type, clf_type, result):
-    with open(feature_name + '_' + result_type + '_' + clf_type+ '.csv', "w", newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        for i in result:
-            writer.writerow(i)
-    return 0
+    """
+    Saves the evaluation results to a CSV file.
+    
+    Parameters:
+        feature_name (str): Base name for the feature.
+        result_type (str): Type of result ('all' or 'each').
+        clf_type (str): Classifier type.
+        result (numpy.ndarray): Evaluation results.
+    
+    Returns:
+        None
+    """
+    filename = f"{feature_name}_{result_type}_{clf_type}.csv"
+    try:
+        np.savetxt(filename, result, delimiter=",", fmt='%.6f')
+        print(f"Saved {result_type} results to {filename}")
+    except Exception as e:
+        print(f"Error saving results to {filename}: {e}")
 
-start = time.clock()
+# -----------------------------
+# Main Execution
+# -----------------------------
 
+def main():
+    # Start timing using time.process_time()
+    start = time.process_time()
+    
+    # Load full_pos2.txt
+    try:
+        full_pos = pd.read_csv(full_pos_path, header=None, sep=' ').values
+        print(f"Loaded full_pos2.txt with shape: {full_pos.shape}")
+    except Exception as e:
+        print(f"Error loading {full_pos_path}: {e}")
+        return  # Exit if loading fails
+    
+    # Extract labels
+    new_label = full_pos[:, 0].astype(int)
+    print(f'new_label: {len(new_label)}, first label: {new_label[0]}')
+    
+    # Extract DDI pairs
+    DDI = full_pos[:, 1:3].astype(int)
+    new_label = np.array(new_label)
+    
+    # Perform cross-validation
+    y_pred, y_score, y_true = cross_validation(
+        feature_matrix=f_matrix, 
+        label_matrix=new_label, 
+        clf_type=clf, 
+        event_num=event_num, 
+        seed=seed_value, 
+        CV=CV
+    )
+    
+    # Evaluate predictions
+    all_result, each_result = evaluate(y_pred, y_score, y_true, event_num)
+    print("Overall Evaluation Results:\n", all_result)
+    print("Per-Event Evaluation Results:\n", each_result)
+    
+    # Save results
+    save_result(featureName, 'all', clf, all_result)
+    save_result(featureName, 'each', clf, each_result)
+    
+    # End timing and print elapsed time
+    elapsed_time = time.process_time() - start
+    print(f"Time used: {elapsed_time:.2f} seconds")
 
-y_pred, y_score, y_true = cross_validation(f_matrix, new_label, clf, event_num, seed, CV)
-all_result, each_result = evaluate(y_pred, y_score, y_true, event_num)
-print("all_result, each_result \n",all_result,'\n', each_result)
-save_result(featureName, 'all', clf, all_result)
-save_result(featureName, 'each', clf, each_result)
-
-print("time used:", time.process_time() - start)
+if __name__ == "__main__":
+    main()
