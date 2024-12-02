@@ -107,10 +107,10 @@ base_dir = "/kaggle/working/GNN_DDI/DDI/data5/"
 
 # Input CSV file paths
 file_paths = [
-    os.path.join(base_dir, "final_modelssd1_d_32.csv"),
-    os.path.join(base_dir, "final_modelssd2_d_32.csv"),
-    os.path.join(base_dir, "final_modelssd3_d_32.csv"),
-    os.path.join(base_dir, "final_modelssd4_d_32.csv")
+    os.path.join(base_dir, "final_modelss1.csv"),
+    os.path.join(base_dir, "final_modelss2.csv"),
+    os.path.join(base_dir, "final_modelss3.csv"),
+    os.path.join(base_dir, "final_modelss4.csv")
 ]
 
 # Output file paths
